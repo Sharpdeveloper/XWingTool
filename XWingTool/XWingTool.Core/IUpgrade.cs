@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace XWingTool.Core
 {
-    public class Class1
+    public interface IUpgrade
     {
+         int Count { get; set; }
+         string Name { get; set; }
+         string Gername { get; set; }
     }
 }

@@ -5,8 +5,43 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:XWingTool.Win"
         mc:Ignorable="d"
-        Title="X-Wing Tool" Height="350" Width="525">
+        Title="X-Wing Tool" Height="655" Width="767" Loaded="Window_Loaded">
     <Grid>
-        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Menu Grid.Row="0">
+            <MenuItem Header="File">
+                <MenuItem Header="Quit" Click="MenuItem_Click"/>
+            </MenuItem>
+            <MenuItem Header="Options">
+                <MenuItem Header="Update Data" Click="MenuItem_Click_1"/>
+            </MenuItem>
+        </Menu>
+        <TabControl Grid.Row="2">
+            <TabItem Header="Pilots" Height="22" VerticalAlignment="Top">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="20"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="100"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="50px"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="TextBoxPilotSearch" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="0"/>
+                    <Button x:Name="ButtonPilotSearch" Grid.Column="2" Grid.Row="0" Content="Search"/>
+                    <TreeView x:Name="TreeViewPilots" Grid.Column="0" Grid.ColumnSpan="1" Grid.Row="1" Grid.RowSpan="2" SelectedItemChanged="TreeViewPilots_SelectedItemChanged" />
+                    <DataGrid x:Name="DataGridPilotSearchResult" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="2"/>
+                    <TextBlock x:Name="TextBlockPilots" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="1" TextWrapping="Wrap"/>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Upgrades">
+
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>
