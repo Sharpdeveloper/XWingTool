@@ -11,11 +11,12 @@ namespace XWingTool.Core
     {
         public string Name{ get; set; }
         public string Gername{ get; set; }
-        public int Id{ get; private set; }
-        public List<string> Sources{ get; private set; }
-        public bool Unique{ get; private set; }
-        public Ship OnlyFor{ get; private set; }
-        public int Points{ get; private set; }
+        public int Id{ get;  set; }
+        public List<string> Sources{ get;  set; }
+        public bool Unique{ get;  set; }
+        public Ship OnlyFor{ get;  set; }
+        public int Points{ get;  set; }
+        public string UpgradeSlot { get; set; }
         private int count;
 
         public Title(string name, int id, List<string> sources, bool uniqe, Ship onlyFor, int points)
@@ -27,6 +28,7 @@ namespace XWingTool.Core
             Unique = uniqe;
             OnlyFor = onlyFor;
             Points = points;
+            UpgradeSlot = "Title";
             Count = 0;
         }
 
@@ -42,6 +44,11 @@ namespace XWingTool.Core
                 if (count < 0)
                     count = 0;
             }
+        }
+
+        public List<string> GetText()
+        {
+            return null;
         }
     }
 }

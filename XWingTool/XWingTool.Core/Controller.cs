@@ -40,6 +40,8 @@ namespace XWingTool.Core
                 {
                     data = Load();
                 }
+                else
+                    ReLoad();
             }
 
         }
@@ -338,7 +340,114 @@ namespace XWingTool.Core
                 }
             }
 
-            return new Upgrade(name, id, slot, sources, attack, range, unique, points);
+            return new Upgrade(name, aka, id, slot, sources, attack, range, unique, points);
+        }
+
+        public List<Pilot> SearchPilots(string text)
+        {
+            string[] search = text.Split(' ');
+            List<Pilot> pl = new List<Pilot>();
+            var str = search[0].ToUpper();
+            foreach (var pilot in data.Pilots)
+            {
+                if (pilot.Name.ToUpper().Contains(str))
+                {
+                    if (!pl.Contains(pilot))
+                        pl.Add(pilot);
+                }
+                else if (pilot.Text.ToUpper().Contains(str))
+                {
+                    if (!pl.Contains(pilot))
+                        pl.Add(pilot);
+                }
+                else if (pilot.PilotsFaction.ToUpper().Contains(str))
+                {
+                    if (!pl.Contains(pilot))
+                        pl.Add(pilot);
+                }
+                else if (pilot.PilotsShip != null && pilot.PilotsShip.Name.ToUpper().Contains(str))
+                {
+                    if (!pl.Contains(pilot))
+                        pl.Add(pilot);
+                }
+                else
+                {
+                    foreach (var slot in pilot.Slots)
+                    {
+                        if (slot.ToUpper().Contains(str))
+                        {
+                            if (!pl.Contains(pilot))
+                                pl.Add(pilot);
+                            break;
+                        }
+                    }
+                    if (pilot.PilotsShip != null)
+                    {
+                        foreach (var act in pilot.PilotsShip.Actions)
+                        {
+                            if (act.ToUpper().Contains(str))
+                            {
+                                if (!pl.Contains(pilot))
+                                    pl.Add(pilot);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            for(int i = 1; i < search.Length; i++)
+            {
+                str = search[i].ToUpper();
+                for(int j = 0; j < pl.Count; j++)
+                {
+                    var pilot = pl[j];
+                    bool ok = false;
+                    if (pilot.Name.ToUpper().Contains(str))
+                    {
+                        ok = true;
+                    }
+                    else if (pilot.Text.ToUpper().Contains(str))
+                    {
+                        ok = true;
+                    }
+                    else if (pilot.PilotsShip != null && pilot.PilotsShip.Name.ToUpper().Contains(str))
+                    {
+                        ok = true;
+                    }
+                    else if (pilot.PilotsFaction.ToUpper().Contains(str))
+                    {
+                        ok = true;
+                    }
+                    else
+                    {
+                        foreach (var slot in pilot.Slots)
+                        {
+                            if (slot.ToUpper().Contains(str))
+                            {
+                                ok = true;
+                                break;
+                            }
+                        }
+                        if (pilot.PilotsShip != null)
+                        {
+                            foreach (var act in pilot.PilotsShip.Actions)
+                            {
+                                if (act.ToUpper().Contains(str))
+                                {
+                                    ok = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if(!ok)
+                    {
+                        pl.Remove(pilot);
+                        j--;
+                    }
+                }
+            }
+            return pl;
         }
 
         private Modification ConvertToModification(string data)
@@ -509,7 +618,7 @@ namespace XWingTool.Core
         {
             string text;
             string[] lines;
-            bool ships = false, bracketStart = false, pilots = false;
+            bool ships = false, bracketStart = false, pilots = false, upgrades = false;
             data = new Data();
             List<string> temp = new List<string>();
 
@@ -545,9 +654,12 @@ namespace XWingTool.Core
                 }
                 else if (l.Contains("upgradesById:"))
                 {
+                    upgrades = true;
                     pilots = false;
+                    data.AddPilot(CreatePilot(temp));
+                    temp = new List<string>();
                 }
-                else if (l.Contains("name:") || l.Contains("factions:") || l.Contains("faction:") || l.Contains("attack:") || l.Contains("agility:") || l.Contains("hull:") || l.Contains("shields:") || l.Contains("energy:") || l.Contains("huge:") || l.Contains("epic_points:") || l.Contains("large:") || l.Contains("id:") || l.Contains("unique:") || l.Contains("ship:") || l.Contains("skill:") || l.Contains("points:"))
+                else if (l.Contains("range:") || l.Contains("slot:") || l.Contains("name:") || l.Contains("factions:") || l.Contains("faction:") || l.Contains("attack:") || l.Contains("agility:") || l.Contains("hull:") || l.Contains("shields:") || l.Contains("energy:") || l.Contains("huge:") || l.Contains("epic_points:") || l.Contains("large:") || l.Contains("id:") || l.Contains("unique:") || l.Contains("ship:") || l.Contains("skill:") || l.Contains("points:"))
                     temp.Add(l);
                 else if (l.Contains("actions:") || l.Contains("maneuvers:") || l.Contains("slots:"))
                 {
@@ -563,6 +675,12 @@ namespace XWingTool.Core
                             data.AddPilot(CreatePilot(temp));
                         temp = new List<string>();
                     }
+                    else if(upgrades)
+                    {
+                        if (temp.Count != 0)
+                            data.AddUpgrade(CreateUpgrade(temp));
+                        temp = new List<string>();
+                    }
                 }
                 else
                 {
@@ -572,10 +690,115 @@ namespace XWingTool.Core
                             data.AddShip(CreateShip(temp));
                         temp = new List<string>();
                     }
+                    else if (pilots)
+                    {
+                        if (temp.Count != 0)
+                            data.AddPilot(CreatePilot(temp));
+                        temp = new List<string>();
+                    }
+                    else if (upgrades)
+                    {
+                        if (temp.Count != 0)
+                            data.AddUpgrade(CreateUpgrade(temp));
+                        temp = new List<string>();
+                    }
                 }
             }
-
+            List<IUpgrade> iu= data.IUpgrades.OrderBy(x => x.Points).ThenBy(x => x.Name).ToList<IUpgrade>();
+            data.IUpgrades = new List<IUpgrade>();
+            foreach (var u in iu)
+                data.IUpgrades.Add(u);
             return data;
+        }
+
+        private Upgrade CreateUpgrade(List<string> temp)
+        {
+            //    {
+            //          name: "R2-D2"
+            //          aka: ["R2-D2 (Crew)"]
+            //          canonical_name: 'r2d2'
+            //          id: 3
+            //          unique: true
+            //          slot: "Astromech"
+            //          points: 4
+            //      }
+
+            string name = "", l;
+            string aka = "";
+            int id = -1;
+            string slot = "";
+            bool unique = false;
+            int points = -1;
+            int attack = -1;
+            string range = "";
+            List<string> sources = null;
+
+            for (int i = 0; i < temp.Count; i++)
+            {
+                l = temp[i];
+
+                if (l.Contains("name:") && !l.Contains("canonical_name"))
+                {
+                    if (l.Contains("Dead Man's Switch"))
+                    {
+                        name = l.Split('\"')[1];
+                    }
+                    else
+                    {
+                        try
+                        {
+                            name = l.Split('\'')[1];
+                        }
+                        catch
+                        {
+                            name = l.Split('\"')[1];
+                        }
+                    }
+                }
+                else if (l.Contains("aka:"))
+                {
+                    try
+                    {
+                        aka = l.Split('\'')[1];
+                    }
+                    catch
+                    {
+                        aka = l.Split('\"')[1];
+                    }
+                }
+                else if (l.Contains("id:"))
+                    id = Int32.Parse(l.Remove(0, l.IndexOf(':') + 1));
+                else if (l.Contains("slot:"))
+                {
+                    try
+                    {
+                        slot = l.Split('\'')[1];
+                    }
+                    catch
+                    {
+                        slot = l.Split('\"')[1];
+                    }
+                }
+                else if (l.Contains("range:"))
+                {
+                    try
+                    {
+                        range = l.Split('\'')[1];
+                    }
+                    catch
+                    {
+                        range = l.Split('\"')[1];
+                    }
+                }
+                else if (l.Contains("points:"))
+                    points = Int32.Parse(l.Remove(0, l.IndexOf(':') + 1));
+                else if (l.Contains("attack:"))
+                    attack = Int32.Parse(l.Remove(0, l.IndexOf(':') + 1));
+                else if (l.Contains("unique:"))
+                    unique = true;
+            }
+
+            return new Upgrade(name, aka, id, slot, sources, attack, range, unique, points);
         }
 
         private Pilot CreatePilot(List<string> temp)

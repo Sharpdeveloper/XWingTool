@@ -99,6 +99,8 @@ namespace XWingTool.Core
             List<string> t = new List<string>();
             t.Add("Name:");
             t.Add(" " + Name + "\n");
+            t.Add("Points:");
+            t.Add(" " + Points + "\n");
             t.Add("Faction:");
             t.Add(" " + PilotsFaction + "\n");
             t.Add("Pilotskill:");

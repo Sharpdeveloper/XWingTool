@@ -11,10 +11,12 @@ namespace XWingTool.Core
     {
         public string Name{ get;  set; }
         public string Gername{ get;  set; }
-        public int Id{ get; private set; }
-        public int Points{ get; private set; }
-        public List<string> Sources{ get; private set; }
-        public Ship OnlyFor{ get; private set; }
+        public int Id{ get;  set; }
+        public int Points{ get;  set; }
+        public List<string> Sources{ get;  set; }
+        public Ship OnlyFor{ get;  set; }
+        public string UpgradeSlot { get; set; }
+        public bool Unique { get; set; }
         private int count;
 
         public Modification(string name, int id, int points, List<string> sources, Ship onlyFor)
@@ -25,6 +27,7 @@ namespace XWingTool.Core
             Points = points;
             Sources = sources;
             OnlyFor = onlyFor;
+            UpgradeSlot = "Modification";
             Count = 0;
         }
 
@@ -40,6 +43,11 @@ namespace XWingTool.Core
                 if (count < 0)
                     count = 0;
             }
+        }
+
+        public List<string> GetText()
+        {
+            return null;
         }
     }
 }

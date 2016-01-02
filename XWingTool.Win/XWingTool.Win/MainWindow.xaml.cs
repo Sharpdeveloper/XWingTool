@@ -15,6 +15,7 @@ using System.Windows.Shapes;
 using System.IO;
 
 using XWingTool.Core;
+using System.ComponentModel;
 
 namespace XWingTool.Win
 {
@@ -24,15 +25,66 @@ namespace XWingTool.Win
     public partial class MainWindow : Window
     {
         private CardController cc;
+        private ICollectionView dataView;
+
         public MainWindow()
         {
             InitializeComponent();
+
+            DataGridPilotSearchResult.CanUserSortColumns = false;
+            DataGridPilotSearchResult.SelectionMode = DataGridSelectionMode.Single;
+
+            DataGridPilotSearchResult.Columns.Clear();
+
+            DataGridTextColumn dgc;
+
+            dgc = new DataGridTextColumn();
+            dgc.Header = "Skill";
+            dgc.Binding = new Binding("Skill");
+            dgc.IsReadOnly = true;
+            DataGridPilotSearchResult.Columns.Add(dgc);
+            dgc = new DataGridTextColumn();
+            dgc.Header = "Name";
+            dgc.Binding = new Binding("Name");
+            dgc.IsReadOnly = true;
+            DataGridPilotSearchResult.Columns.Add(dgc);
+            dgc = new DataGridTextColumn();
+            dgc.Header = "Faction";
+            dgc.Binding = new Binding("PilotsFaction");
+            dgc.IsReadOnly = true;
+            DataGridPilotSearchResult.Columns.Add(dgc);
+            dgc = new DataGridTextColumn();
+            dgc.Header = "Points";
+            dgc.Binding = new Binding("Points");
+            dgc.IsReadOnly = true;
+            DataGridPilotSearchResult.Columns.Add(dgc);
+            dgc = new DataGridTextColumn();
+            dgc.Header = "Ship";
+            dgc.Binding = new Binding("ShipName");
+            dgc.IsReadOnly = true;
+            DataGridPilotSearchResult.Columns.Add(dgc);
+
+            dgc = new DataGridTextColumn();
+            dgc.Header = "Points";
+            dgc.Binding = new Binding("Points");
+            dgc.IsReadOnly = true;
+            DataGridUpgradeSearchResult.Columns.Add(dgc);
+            dgc = new DataGridTextColumn();
+            dgc.Header = "Name";
+            dgc.Binding = new Binding("Name");
+            dgc.IsReadOnly = true;
+            DataGridUpgradeSearchResult.Columns.Add(dgc);
+            dgc = new DataGridTextColumn();
+            dgc.Header = "UpgradeSlot";
+            dgc.Binding = new Binding("UpgradeSlot");
+            dgc.IsReadOnly = true;
+            DataGridUpgradeSearchResult.Columns.Add(dgc);
         }
 
         private void BuildTreeViewPilots()
         {
             TreeViewPilots.Items.Clear();
-            string[,,] pilots = new string[3, cc.data.Ships.Count, cc.data.Pilots.Count];
+            string[,,] pilots = new string[3, cc.data.Ships.Count / 2, cc.data.Pilots.Count / (cc.data.Ships.Count / 4)];
             pilots[0, 0, 0] = "Rebel Alliance / Resistance";
             pilots[1, 0, 0] = "Galactic Empire / First Order";
             pilots[2, 0, 0] = "Scum and Villainy";
@@ -137,7 +189,7 @@ namespace XWingTool.Win
                             break;
                         p.Add(pilots[i, z, k]);
                     }
-                    p.Sort();
+                    p.Sort(); ;
                     foreach (var p2 in p)
                     {
                         TreeViewItem tvi3 = new TreeViewItem();
@@ -147,6 +199,64 @@ namespace XWingTool.Win
                     tvi.Items.Add(tvi2);
                 }
                 TreeViewPilots.Items.Add(tvi);
+            }
+
+        }
+
+        private void BuildTreeViewUpgrades()
+        {
+            TreeViewUpgrades.Items.Clear();
+            string[,] upgrades = new string[cc.data.UpgradeSlots.Count, cc.data.IUpgrades.Count / (cc.data.UpgradeSlots.Count / 3)];
+            cc.data.UpgradeSlots.Sort();
+            for (int i = 0; i < cc.data.UpgradeSlots.Count; i++)
+            {
+                upgrades[i, 0] = cc.data.UpgradeSlots[i];
+            }
+            int[,] index = new int[cc.data.UpgradeSlots.Count,1];
+            for (int i = 0; i < cc.data.UpgradeSlots.Count; i++)
+            {
+                index[i, 0] = 1;
+            }
+
+            foreach (var upgr in cc.data.IUpgrades)
+            {
+                int f = -1;
+                for(int i = 0; i < cc.data.UpgradeSlots.Count; i++)
+                {
+                    if(upgrades[i,0] == upgr.UpgradeSlot)
+                    {
+                        f = i;
+                        break;
+                    }
+                }
+                if (f != -1 && upgr.Name != "")
+                {
+                    upgrades[f, index[f, 0]] = upgr.Name + " (" + upgr.Points + ")";
+                    index[f, 0]++;
+                }
+            }
+
+            List<string> u;
+            for (int i = 0; i < cc.data.UpgradeSlots.Count; i++)
+            {
+                TreeViewItem tvi = new TreeViewItem();
+                tvi.Header = upgrades[i, 0];
+                u = new List<string>();
+                for (int j = 1; j < cc.data.IUpgrades.Count; j++)
+                {
+                    
+                    if (upgrades[i, j] == null)
+                        break;
+                    u.Add(upgrades[i, j]);
+                }
+                //u.Sort();
+                for (int j = 0; j < u.Count; j++)
+                {
+                    TreeViewItem tvi2 = new TreeViewItem();
+                    tvi2.Header = u[j];
+                    tvi.Items.Add(tvi2);
+                }
+                TreeViewUpgrades.Items.Add(tvi);
             }
 
         }
@@ -178,6 +288,7 @@ namespace XWingTool.Win
             if (cc.data != null)
             {
                 BuildTreeViewPilots();
+                BuildTreeViewUpgrades();
             }
         }
 
@@ -186,54 +297,61 @@ namespace XWingTool.Win
             string v = (string)((TreeViewItem)TreeViewPilots.SelectedItem).Header;
             if (v == "Rebel Alliance / Resistance" || v == "Galactic Empire / First Order" || v == "Scum and Villainy")
                 return;
-            TextBlockPilots.Inlines.Clear();
 
             int pos = cc.data.PilotNames.IndexOf(v);
-            List<string> text = null;
             if (pos > -1)
             {
-                text = cc.data.Pilots[pos].GetText();
-                if (text != null)
-                {
-                    int last = text.Count - 1;
-                    for (int i = 0; i < last; i++)
-                    {
-                        if (i % 2 == 0)
-                            TextBlockPilots.Inlines.Add(new Run(text[i]) { FontWeight = FontWeights.Bold });
-                        else
-                            TextBlockPilots.Inlines.Add(text[i]);
-                    }
-                    if (text[last].Contains(".png"))
-                    {
-                        string file = System.IO.Path.Combine(cc.maneuverPath, text[last]);
-                        if (File.Exists(file))
-                        {
-                            BitmapImage source = new BitmapImage(new Uri(file));
-                            Image image = new Image();
-                            image.Source = source;
-                            image.Width = 225;
-                            image.Height = 160;
-                            image.Visibility = Visibility;
-                            InlineUIContainer container = new InlineUIContainer(image);
-                            TextBlockPilots.Inlines.Add(container);
-                        }
-                        else
-                            TextBlockPilots.Inlines.Add("Maneuver unknown or graphic missing.");
-                    }
-                    else
-                        TextBlockPilots.Inlines.Add(text[last]);
-                }
+                DisplayPilot(cc.data.Pilots[pos]);
             }
             else
             {
                 pos = cc.data.ShipNames.IndexOf(v);
-                text = null;
+
                 if (pos > -1)
                 {
-                    text = cc.data.Ships[pos].GetText();
+                    DisplayShip(cc.data.Ships[pos]);
                 }
+            }
+
+        }
+
+        private void ButtonPilotSearch_Click(object sender, RoutedEventArgs e)
+        {
+            PilotSearch();
+        }
+
+        private void TextBoxPilotSearch_KeyUp(object sender, KeyEventArgs e)
+        {
+            if(e.Key == Key.Enter || e.Key == Key.Return)
+                PilotSearch();
+        }
+
+        private void PilotSearch()
+        {
+            List<Pilot> pl = cc.SearchPilots(this.TextBoxPilotSearch.Text);
+            DataGridPilotSearchResult.ItemsSource = null;
+            DataGridPilotSearchResult.ItemsSource = pl;
+            dataView = CollectionViewSource.GetDefaultView(DataGridPilotSearchResult.ItemsSource);
+            dataView.SortDescriptions.Clear();
+
+            dataView.SortDescriptions.Add(new SortDescription("Skill", ListSortDirection.Descending));
+            dataView.SortDescriptions.Add(new SortDescription("Name", ListSortDirection.Ascending));
+            dataView.Refresh();
+        }
+
+        private void DataGridPilotSearchResult_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            DisplayPilot((Pilot)DataGridPilotSearchResult.SelectedItem);
+        }
+
+        private void DisplayPilot(Pilot p)
+        {
+            if (p != null)
+            {
+                List<string> text = p.GetText();
                 if (text != null)
                 {
+                    TextBlockPilots.Inlines.Clear();
                     int last = text.Count - 1;
                     for (int i = 0; i < last; i++)
                     {
@@ -263,9 +381,63 @@ namespace XWingTool.Win
                         TextBlockPilots.Inlines.Add(text[last]);
                 }
             }
+        }
+
+        private void DisplayShip(Ship s)
+        {
+            List<string> text = s.GetText();
+            if (text != null)
+            {
+                TextBlockPilots.Inlines.Clear();
+                int last = text.Count - 1;
+                for (int i = 0; i < last; i++)
+                {
+                    if (i % 2 == 0)
+                        TextBlockPilots.Inlines.Add(new Run(text[i]) { FontWeight = FontWeights.Bold });
+                    else
+                        TextBlockPilots.Inlines.Add(text[i]);
+                }
+                if (text[last].Contains(".png"))
+                {
+                    string file = System.IO.Path.Combine(cc.maneuverPath, text[last]);
+                    if (File.Exists(file))
+                    {
+                        BitmapImage source = new BitmapImage(new Uri(file));
+                        Image image = new Image();
+                        image.Source = source;
+                        image.Width = 225;
+                        image.Height = 160;
+                        image.Visibility = Visibility;
+                        InlineUIContainer container = new InlineUIContainer(image);
+                        TextBlockPilots.Inlines.Add(container);
+                    }
+                    else
+                        TextBlockPilots.Inlines.Add("Maneuver unknown or graphic missing.");
+                }
+                else
+                    TextBlockPilots.Inlines.Add(text[last]);
+            }
+        }
+
+        private void TextBoxUpgradeSearch_KeyUp(object sender, KeyEventArgs e)
+        {
+
+        }
+
+        private void ButtonUpgradeSearch_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void TreeViewUpgrades_SelectedItemChanged(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void DataGridUpgradeSearchResult_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
 
         }
     }
 
 }
-
