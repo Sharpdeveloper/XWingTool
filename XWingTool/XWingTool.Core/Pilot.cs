@@ -98,7 +98,10 @@ namespace XWingTool.Core
         {
             List<string> t = new List<string>();
             t.Add("Name:");
-            t.Add(" " + Name + "\n");
+            if(Unique)
+                t.Add(" *" + Name + "\n");
+            else
+                t.Add(" " + Name + "\n");
             t.Add("Points:");
             t.Add(" " + Points + "\n");
             t.Add("Faction:");
@@ -136,12 +139,37 @@ namespace XWingTool.Core
             }
             if (Text != "")
             {
-                t.Add("Pilotability:");
-                t.Add(" " + Text + "\n");
+                t.Add("Cardtext:\n");
+                if (Text.Contains("<strong>"))
+                {
+                    string rest = Text, big;
+                    int start, end, length;
+
+                    while (rest.Contains("<strong>"))
+                    {
+                        if (rest.Contains("<strong>"))
+                        {
+                            big = rest.Remove(rest.IndexOf("<strong>"));
+                            t.Add(big);
+                        }
+                        else
+                            t.Add(rest);
+                        start = rest.IndexOf("<strong>") + 8;
+                        end = rest.IndexOf("</strong>");
+                        length = end - start;
+                        end += 9;
+                        big = rest.Substring(start, length);
+                        rest = rest.Substring(end);
+                        t.Add(big);
+                    }
+                    t.Add(rest);
+                }
+                else
+                    t.Add(Text);
             }
             if (PilotsShip != null)
             {
-                t.Add("Maneuver:");
+                t.Add("\nManeuver:");
                 t.Add(" " + PilotsShip.Green + " green, " + PilotsShip.White + " white and " + PilotsShip.Red + " red\n");
                 t.Add(PilotsShip.Name + ".png");
             }

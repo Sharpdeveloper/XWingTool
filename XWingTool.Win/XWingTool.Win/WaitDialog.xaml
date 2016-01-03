@@ -1,0 +1,12 @@
+﻿<Window x:Class="XWingTool.Win.WaitDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:XWingTool.Win"
+        mc:Ignorable="d"
+        Title="Please wait while initialising...." Height="87" Width="380" ResizeMode="NoResize" WindowStartupLocation="CenterOwner">
+    <Grid>
+        <ProgressBar x:Name="ProgressBarT" HorizontalAlignment="Left" Height="29" Margin="10,10,0,0" VerticalAlignment="Top" Width="354"/>
+    </Grid>
+</Window>

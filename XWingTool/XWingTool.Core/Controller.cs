@@ -236,113 +236,6 @@ namespace XWingTool.Core
             return null;
         }
 
-        private Upgrade ConvertToUpgrade(string data)
-        {
-            int s = 0;
-            int e = data.IndexOf("\n", s); ;
-            List<string> pilotvalues = new List<string>();
-            do
-            {
-                pilotvalues.Add(data.Substring(s, e - s));
-                s = e + 2;
-                e = data.IndexOf("\n", s);
-            } while (e > 0);
-
-            string name = "";
-            int id = -1;
-            string slot = "";
-            List<string> sources = new List<string>();
-            int attack = -1;
-            string range = "";
-            bool unique = false;
-            int points = -1;
-
-            for (int i = 0; i < pilotvalues.Count; i++)
-            {
-                string str = pilotvalues[i];
-                if (str.Contains(" name"))
-                {
-                    s = str.IndexOf("\"", 0) + 1;
-                    e = str.IndexOf("\"", s);
-                    if (s == 0 && e == -1)
-                    {
-                        s = str.IndexOf("\'", 0) + 1;
-                        e = str.IndexOf("\'", s);
-                    }
-                    name = str.Substring(s, e - s);
-                }
-                else if (str.Contains(" id"))
-                {
-                    s = str.IndexOf(":", 0) + 2;
-                    try
-                    {
-                        id = Int32.Parse(str.Substring(s, 3));
-                    }
-                    catch (ArgumentOutOfRangeException exce)
-                    {
-                        try
-                        {
-                            id = Int32.Parse(str.Substring(s, 2));
-                        }
-                        catch (ArgumentOutOfRangeException excep)
-                        {
-                            id = Int32.Parse(str.Substring(s, 1));
-                        }
-                    }
-                }
-                else if (str.Contains("attack"))
-                {
-                    s = str.IndexOf(":", 0) + 2;
-                    attack = Int32.Parse(str.Substring(s, 1));
-                }
-                else if (str.Contains("range"))
-                {
-                    s = str.IndexOf("\"", 0) + 1;
-                    e = str.IndexOf("\"", s);
-                    try
-                    {
-                        range = str.Substring(s, e - s);
-                    }
-                    catch (ArgumentException ae)
-                    {
-                        s = str.IndexOf("\'", 0) + 1;
-                        e = str.IndexOf("\'", s);
-                        range = str.Substring(s, e - s);
-                    }
-                }
-                else if (str.Contains("sources"))
-                {
-                    //s = str.IndexOf("[", 0);
-                    //e = str.IndexOf("]", s);
-                    //sources = GetSources(str.Substring(s, e - s));
-                }
-                else if (str.Contains("unique"))
-                {
-                    unique = true;
-                }
-                else if (str.Contains("points"))
-                {
-                    s = str.IndexOf(":", 0) + 2;
-                    try
-                    {
-                        points = Int32.Parse(str.Substring(s, 2));
-                    }
-                    catch (ArgumentOutOfRangeException ex)
-                    {
-                        points = Int32.Parse(str.Substring(s, 1));
-                    }
-                }
-                else if (str.Contains("slot"))
-                {
-                    for (int j = i; j < pilotvalues.Count; j++)
-                        str += pilotvalues[j];
-                    //slot = GetSlots(str)[0];
-                }
-            }
-
-            return new Upgrade(name, aka, id, slot, sources, attack, range, unique, points);
-        }
-
         public List<Pilot> SearchPilots(string text)
         {
             string[] search = text.Split(' ');
@@ -450,175 +343,63 @@ namespace XWingTool.Core
             return pl;
         }
 
-        private Modification ConvertToModification(string data)
+        public List<IUpgrade> SearchUpgrades(string text)
         {
-            int s = 0;
-            int e = data.IndexOf("\n", s); ;
-            List<string> pilotvalues = new List<string>();
-            do
+            string[] search = text.Split(' ');
+            List<IUpgrade> ul = new List<IUpgrade>();
+            var str = search[0].ToUpper();
+            foreach (var upgrade in data.IUpgrades)
             {
-                pilotvalues.Add(data.Substring(s, e - s));
-                s = e + 2;
-                e = data.IndexOf("\n", s);
-            } while (e > 0);
-
-            string name = "";
-            int id = -1;
-            List<string> sources = new List<string>();
-            int points = -1;
-            Ship onlyFor = null;
-
-            for (int i = 0; i < pilotvalues.Count; i++)
+                if (upgrade.Name.ToUpper().Contains(str))
+                {
+                    if (!ul.Contains(upgrade))
+                        ul.Add(upgrade);
+                }
+                else if (upgrade.Text.ToUpper().Contains(str))
+                {
+                    if (!ul.Contains(upgrade))
+                        ul.Add(upgrade);
+                }
+                else if (upgrade.UpgradeSlot.ToUpper().Contains(str))
+                {
+                    if (!ul.Contains(upgrade))
+                        ul.Add(upgrade);
+                }
+            }
+            for (int i = 1; i < search.Length; i++)
             {
-                string str = pilotvalues[i];
-                if (str.Contains(" name"))
+                str = search[i].ToUpper();
+                for (int j = 0; j < ul.Count; j++)
                 {
-                    s = str.IndexOf("\"", 0) + 1;
-                    e = str.IndexOf("\"", s);
-                    name = str.Substring(s, e - s);
-                }
-                else if (str.Contains(" id"))
-                {
-                    s = str.IndexOf(":", 0) + 2;
-                    try
+                    var upgrade = ul[j];
+                    bool ok = false;
+                    if (upgrade.Name.ToUpper().Contains(str))
                     {
-                        id = Int32.Parse(str.Substring(s, 3));
+                        ok = true;
                     }
-                    catch (ArgumentOutOfRangeException exce)
+                    else if (upgrade.Text.ToUpper().Contains(str))
                     {
-                        try
-                        {
-                            id = Int32.Parse(str.Substring(s, 2));
-                        }
-                        catch (ArgumentOutOfRangeException excep)
-                        {
-                            id = Int32.Parse(str.Substring(s, 1));
-                        }
+                        ok = true;
                     }
-                }
-                else if (str.Contains("sources"))
-                {
-                    //s = str.IndexOf("[", 0);
-                    //e = str.IndexOf("]", s);
-                    //sources = GetSources(str.Substring(s, e - s));
-                }
-                else if (str.Contains("ship") && !str.Contains("ship.data.") && !str.Contains("restriction_func"))
-                {
-                    s = str.IndexOf("\"", 0) + 1;
-                    e = str.IndexOf("\"", s);
-                    onlyFor = GetShip(str.Substring(s, e - s));
-                }
-                else if (str.Contains("points"))
-                {
-                    s = str.IndexOf(":", 0) + 2;
-                    try
+                    else if (upgrade.UpgradeSlot.ToUpper().Contains(str))
                     {
-                        points = Int32.Parse(str.Substring(s, 2));
+                        ok = true;
                     }
-                    catch (ArgumentOutOfRangeException ex)
+                    if (!ok)
                     {
-                        points = Int32.Parse(str.Substring(s, 1));
+                        ul.Remove(upgrade);
+                        j--;
                     }
                 }
             }
-
-            return new Modification(name, id, points, sources, onlyFor);
-        }
-
-        private Title ConvertToTitles(string data)
-        {
-            int s = 0;
-            int e = data.IndexOf("\n", s); ;
-            List<string> pilotvalues = new List<string>();
-            do
-            {
-                pilotvalues.Add(data.Substring(s, e - s));
-                s = e + 2;
-                e = data.IndexOf("\n", s);
-            } while (e > 0);
-
-            string name = "";
-            int id = -1;
-            List<string> sources = new List<string>();
-            int points = -1;
-            Ship onlyFor = null;
-            bool unique = false;
-
-            for (int i = 0; i < pilotvalues.Count; i++)
-            {
-                string str = pilotvalues[i];
-                if (str.Contains(" name"))
-                {
-                    s = str.IndexOf("\"", 0) + 1;
-                    e = str.IndexOf("\"", s);
-                    try
-                    {
-                        name = str.Substring(s, e - s);
-                    }
-                    catch (ArgumentOutOfRangeException exc)
-                    {
-                        s = str.IndexOf("\'", 0) + 1;
-                        e = str.IndexOf("\'", s);
-                        name = str.Substring(s, e - s);
-                    }
-                }
-                else if (str.Contains(" id"))
-                {
-                    s = str.IndexOf(":", 0) + 2;
-                    try
-                    {
-                        id = Int32.Parse(str.Substring(s, 3));
-                    }
-                    catch (ArgumentOutOfRangeException exce)
-                    {
-                        try
-                        {
-                            id = Int32.Parse(str.Substring(s, 2));
-                        }
-                        catch (ArgumentOutOfRangeException excep)
-                        {
-                            id = Int32.Parse(str.Substring(s, 1));
-                        }
-                    }
-                }
-                else if (str.Contains("sources"))
-                {
-                    //s = str.IndexOf("[", 0);
-                    //e = str.IndexOf("]", s);
-                    //sources = GetSources(str.Substring(s, e - s));
-                }
-                else if (str.Contains("ship") && !str.Contains("ship.") && !str.Contains("restriction_func") && !str.Contains("validation_func"))
-                {
-                    s = str.IndexOf("\"", 0) + 1;
-                    e = str.IndexOf("\"", s);
-                    onlyFor = GetShip(str.Substring(s, e - s));
-                }
-                else if (str.Contains("unique"))
-                {
-                    unique = true;
-                }
-                else if (str.Contains(" points"))
-                {
-                    s = str.IndexOf(":", 0) + 2;
-                    try
-                    {
-                        points = Int32.Parse(str.Substring(s, 2));
-                    }
-                    catch (ArgumentOutOfRangeException ex)
-                    {
-                        points = Int32.Parse(str.Substring(s, 1));
-                    }
-                }
-            }
-
-            return new Title(name, id, sources, unique, onlyFor, points);
+            return ul;
         }
 
         private Data LoadContents(bool update = false, bool silence = false)
         {
             string text;
             string[] lines;
-            bool ships = false, bracketStart = false, pilots = false, upgrades = false;
+            bool ships = false, bracketStart = false, pilots = false, upgrades = false, modifications= false, titles = false;
             data = new Data();
             List<string> temp = new List<string>();
 
@@ -659,12 +440,32 @@ namespace XWingTool.Core
                     data.AddPilot(CreatePilot(temp));
                     temp = new List<string>();
                 }
-                else if (l.Contains("range:") || l.Contains("slot:") || l.Contains("name:") || l.Contains("factions:") || l.Contains("faction:") || l.Contains("attack:") || l.Contains("agility:") || l.Contains("hull:") || l.Contains("shields:") || l.Contains("energy:") || l.Contains("huge:") || l.Contains("epic_points:") || l.Contains("large:") || l.Contains("id:") || l.Contains("unique:") || l.Contains("ship:") || l.Contains("skill:") || l.Contains("points:"))
+                else if (l.Contains("modificationsById:"))
+                {
+                    modifications = true;
+                    upgrades = false;
+                    data.AddIUpgrade(CreateUpgrade(temp));
+                    temp = new List<string>();
+                }
+                else if (l.Contains("titlesById:"))
+                {
+                    titles = true;
+                    modifications = false;
+                    data.AddIUpgrade(CreateModification(temp));
+                    temp = new List<string>();
+                }
+                else if(l.Contains("exportObj.setupCardData"))
+                {
+                    titles = false;
+                    data.AddIUpgrade(CreateTitle(temp));
+                    temp = new List<string>();
+                }
+                else if (l.Contains("aka:") || l.Contains("range:") || l.Contains("slot:") || l.Contains("name:") || l.Contains("factions:") || l.Contains("faction:") || l.Contains("attack:") || l.Contains("agility:") || l.Contains("hull:") || l.Contains("shields:") || l.Contains("energy:") || l.Contains("huge:") || l.Contains("epic_points:") || l.Contains("large:") || l.Contains("id:") || l.Contains("unique:") || l.Contains("ship:") || l.Contains("skill:") || l.Contains("points:"))
                     temp.Add(l);
                 else if (l.Contains("actions:") || l.Contains("maneuvers:") || l.Contains("slots:"))
                 {
                     temp.Add(l);
-                    if (!l.Contains(']'))
+                    if (!l.Contains(']') && !titles)
                         bracketStart = true;
                 }
                 else if (l.Contains("}"))
@@ -678,7 +479,19 @@ namespace XWingTool.Core
                     else if(upgrades)
                     {
                         if (temp.Count != 0)
-                            data.AddUpgrade(CreateUpgrade(temp));
+                            data.AddIUpgrade(CreateUpgrade(temp));
+                        temp = new List<string>();
+                    }
+                    else if (modifications)
+                    {
+                        if (temp.Count != 0)
+                            data.AddIUpgrade(CreateModification(temp));
+                        temp = new List<string>();
+                    }
+                    else if (titles)
+                    {
+                        if (temp.Count != 0)
+                            data.AddIUpgrade(CreateTitle(temp));
                         temp = new List<string>();
                     }
                 }
@@ -690,24 +503,20 @@ namespace XWingTool.Core
                             data.AddShip(CreateShip(temp));
                         temp = new List<string>();
                     }
-                    else if (pilots)
-                    {
-                        if (temp.Count != 0)
-                            data.AddPilot(CreatePilot(temp));
-                        temp = new List<string>();
-                    }
-                    else if (upgrades)
-                    {
-                        if (temp.Count != 0)
-                            data.AddUpgrade(CreateUpgrade(temp));
-                        temp = new List<string>();
-                    }
                 }
             }
+            List<Pilot> pl = data.Pilots.OrderBy(x => x.PilotsFaction).ThenByDescending(x => x.Points).ThenBy(x => x.Name).ToList<Pilot>();
+            data.ClearPilots();
+            foreach (var p in pl)
+                data.AddPilot(p);
+            List<Ship> sl = data.Ships.OrderBy(x => x.Name).ToList<Ship>();
+            data.ClearShips();
+            foreach (var s in sl)
+                data.AddShip(s);
             List<IUpgrade> iu= data.IUpgrades.OrderBy(x => x.Points).ThenBy(x => x.Name).ToList<IUpgrade>();
-            data.IUpgrades = new List<IUpgrade>();
+            data.ClearUpgrades();
             foreach (var u in iu)
-                data.IUpgrades.Add(u);
+                data.AddIUpgrade(u);
             return data;
         }
 
@@ -770,13 +579,16 @@ namespace XWingTool.Core
                     id = Int32.Parse(l.Remove(0, l.IndexOf(':') + 1));
                 else if (l.Contains("slot:"))
                 {
-                    try
+                    if (slot == "")
                     {
-                        slot = l.Split('\'')[1];
-                    }
-                    catch
-                    {
-                        slot = l.Split('\"')[1];
+                        try
+                        {
+                            slot = l.Split('\'')[1];
+                        }
+                        catch
+                        {
+                            slot = l.Split('\"')[1];
+                        }
                     }
                 }
                 else if (l.Contains("range:"))
@@ -799,6 +611,121 @@ namespace XWingTool.Core
             }
 
             return new Upgrade(name, aka, id, slot, sources, attack, range, unique, points);
+        }
+
+        private Modification CreateModification(List<string> temp)
+        {
+            //    {
+            //          name: "R2-D2"
+            //          aka: ["R2-D2 (Crew)"]
+            //          canonical_name: 'r2d2'
+            //          id: 3
+            //          unique: true
+            //          slot: "Astromech"
+            //          points: 4
+            //      }
+
+            string name = "", l;
+            int id = -1;
+            int points = -1;
+            List<string> sources = null;
+            bool unique = false;
+
+            for (int i = 0; i < temp.Count; i++)
+            {
+                l = temp[i];
+
+                if (l.Contains("name:") && !l.Contains("canonical_name"))
+                {
+                        try
+                        {
+                            name = l.Split('\'')[1];
+                        }
+                        catch
+                        {
+                            name = l.Split('\"')[1];
+                        }
+                }
+                else if (l.Contains("id:"))
+                    id = Int32.Parse(l.Remove(0, l.IndexOf(':') + 1));
+                else if (l.Contains("points:"))
+                    points = Int32.Parse(l.Remove(0, l.IndexOf(':') + 1));
+                else if (l.Contains("unique:"))
+                    unique = true;
+            }
+
+            return new Modification(name, id, points, sources, null, unique);
+        }
+
+        private Title CreateTitle(List<string> temp)
+        {
+            //    {
+            //          name: "R2-D2"
+            //          aka: ["R2-D2 (Crew)"]
+            //          canonical_name: 'r2d2'
+            //          id: 3
+            //          unique: true
+            //          slot: "Astromech"
+            //          points: 4
+            //      }
+
+            string name = "", l;
+            int id = -1;
+            int points = -1;
+            List<string> sources = null;
+            bool unique = false;
+            Ship ship = null;
+
+            for (int i = 0; i < temp.Count; i++)
+            {
+                l = temp[i];
+
+                if (l.Contains("name:") && !l.Contains("canonical_name"))
+                {
+                    if (l.Contains("Dodonna's Pride"))
+                        name = "Dodonna's Pride";
+                    else if (l.Contains("Jaina's Light"))
+                        name = "Jaina's Light";
+                    else if (l.Contains("Heavy Scyk") && l.Contains("(Cannon)"))
+                        name = "\"Heavy Scyk\" Interceptor (Cannon)";
+                    else if (l.Contains("Heavy Scyk") && l.Contains("(Torpedo)"))
+                        name = "\"Heavy Scyk\" Interceptor (Torpedo)";
+                    else if (l.Contains("Heavy Scyk") && l.Contains("(Missile)"))
+                        name = "\"Heavy Scyk\" Interceptor (Missile)";
+                    else if (l.Contains("Hound's Tooth"))
+                        name = "Hound's Tooth";
+                    if (name != "")
+                        continue;
+                    try
+                    {
+                        name = l.Split('\'')[1];
+                    }
+                    catch
+                    {
+                        name = l.Split('\"')[1];
+                    }
+                }
+                else if (l.Contains("id:"))
+                    id = Int32.Parse(l.Remove(0, l.IndexOf(':') + 1));
+                else if (l.Contains("points:"))
+                    points = Int32.Parse(l.Remove(0, l.IndexOf(':') + 1));
+                else if (l.Contains("unique:"))
+                    unique = true;
+                else if (l.Contains("ship:"))
+                {
+                    try
+                    {
+                        ship = GetShip(l.Split('\"')[1]);
+                    }
+                    catch
+                    {
+                        ship = GetShip(l.Split('\'')[1]);
+                    }
+                    
+                }
+            }
+
+            return new Title(name, id, sources, unique, ship, points);
         }
 
         private Pilot CreatePilot(List<string> temp)
@@ -1086,7 +1013,6 @@ namespace XWingTool.Core
                                 temp = l.Split('\"')[1];
                             }
                             data.Pilots[pos].Gername = temp;
-                            data.PilotGerNames[pos] = temp;
                         }
                         else if (l.Contains("ship:"))
                         {
@@ -1129,6 +1055,198 @@ namespace XWingTool.Core
                                 }
                             }
                             pos = data.PilotNames.IndexOf(temp);
+                        }
+                    }
+                    else if (upgrades)
+                    {
+                        if (l.Contains("name:"))
+                        {
+                            try
+                            {
+                                temp = l.Split('\'')[1];
+                            }
+                            catch
+                            {
+                                temp = l.Split('\"')[1];
+                            }
+                            data.IUpgrades[pos].Gername = temp;
+                        }
+                        else if (l.Contains("text:"))
+                        {
+                            l = l.Replace("%LINEBREAK%", "\n");
+                            l = l.Replace("<br />", "\n");
+                            if (l.Contains("<span"))
+                            {
+                                int start = l.IndexOf(">") + 1;
+                                int end = l.IndexOf("</span>");
+                                int length = end - start;
+                                end += 7;
+                                data.IUpgrades[pos].Restriction = l.Substring(start, length);
+                                l = l.Substring(end, l.Length - end - 3);
+                                data.IUpgrades[pos].Text = "<strong>" + data.IUpgrades[pos].Restriction + "</strong>" + l;
+                            }
+                            else
+                            {
+                                try
+                                {
+                                    data.IUpgrades[pos].Text = l.Split('\"')[3];
+                                }
+                                catch
+                                {
+                                    data.IUpgrades[pos].Text = l.Split('\'')[3];
+                                }
+                            }
+                        }
+                        else if (l.Contains('#') || l == "")
+                            continue;
+                        else
+                        {
+                            if (l.Contains("Dead Man's Switch"))
+                                temp = "Dead Man's Switch";
+                            else
+                            {
+                                try
+                                {
+                                    temp = l.Split('\'')[1];
+                                }
+                                catch
+                                {
+                                    temp = l.Split('\"')[1];
+                                }
+                            }
+                            pos = data.UpgradeNames.IndexOf(temp);
+                        }
+                    }
+                    else if (modifications)
+                    {
+                        if (l.Contains("name:"))
+                        {
+                            try
+                            {
+                                temp = l.Split('\'')[1];
+                            }
+                            catch
+                            {
+                                temp = l.Split('\"')[1];
+                            }
+                            data.IUpgrades[pos].Gername = temp;
+                        }
+                        else if (l.Contains("text:"))
+                        {
+                            l = l.Replace("%LINEBREAK%", "\n");
+                            l = l.Replace("<br />", "\n");
+                            if (l.Contains("<span"))
+                            {
+                                int start = l.IndexOf(">") + 1;
+                                int end = l.IndexOf("</span>");
+                                int length = end - start;
+                                end += 7;
+                                data.IUpgrades[pos].Restriction = l.Substring(start, length);
+                                l = l.Substring(end, l.Length - end - 3);
+                                data.IUpgrades[pos].Text = "<strong>" + data.IUpgrades[pos].Restriction + "</strong>" + l;
+                            }
+                            else
+                            {
+                                try
+                                {
+                                    data.IUpgrades[pos].Text = l.Split('\"')[3];
+                                }
+                                catch
+                                {
+                                    data.IUpgrades[pos].Text = l.Split('\'')[3];
+                                }
+                            }
+                        }
+                        else if (l.Contains('#') || l == "")
+                            continue;
+                        else
+                        {
+                            if (l.Contains("Dead Man's Switch"))
+                                temp = "Dead Man's Switch";
+                            else
+                            {
+                                try
+                                {
+                                    temp = l.Split('\'')[1];
+                                }
+                                catch
+                                {
+                                    temp = l.Split('\"')[1];
+                                }
+                            }
+                            pos = data.UpgradeNames.IndexOf(temp);
+                        }
+                    }
+                    else if (title)
+                    {
+                        if (l.Contains("name:"))
+                        {
+                            try
+                            {
+                                temp = l.Split('\'')[1];
+                            }
+                            catch
+                            {
+                                temp = l.Split('\"')[1];
+                            }
+                            data.IUpgrades[pos].Gername = temp;
+                        }
+                        else if (l.Contains("text:"))
+                        {
+                            l = l.Replace("%LINEBREAK%", "\n");
+                            l = l.Replace("<br />", "\n");
+                            if (l.Contains("<span"))
+                            {
+                                int start = l.IndexOf(">") + 1;
+                                int end = l.IndexOf("</span>");
+                                int length = end - start;
+                                end += 7;
+                                data.IUpgrades[pos].Restriction = l.Substring(start, length);
+                                l = l.Substring(end, l.Length-end-3);
+                                data.IUpgrades[pos].Text = "<strong>" + data.IUpgrades[pos].Restriction + "</strong>" + l;
+                            }
+                            else
+                            {
+                                try
+                                {
+                                    data.IUpgrades[pos].Text = l.Split('\"')[3];
+                                }
+                                catch
+                                {
+                                    data.IUpgrades[pos].Text = l.Split('\'')[3];
+                                }
+                            }
+                        }
+                        else if (l.Contains('#') || l == "")
+                            continue;
+                        else
+                        {
+                            
+                            if (l.Contains("Dodonna's Pride"))
+                                temp = "Dodonna's Pride";
+                            else if (l.Contains("Jaina's Light"))
+                                temp = "Jaina's Light";
+                            else if (l.Contains("Heavy Scyk") && l.Contains("(Cannon)"))
+                                temp = "\"Heavy Scyk\" Interceptor (Cannon)";
+                            else if (l.Contains("Heavy Scyk") && l.Contains("(Torpedo)"))
+                                temp = "\"Heavy Scyk\" Interceptor (Torpedo)";
+                            else if (l.Contains("Heavy Scyk") && l.Contains("(Missile)"))
+                                temp = "\"Heavy Scyk\" Interceptor (Missile)";
+                            else if (l.Contains("Hound's Tooth"))
+                                temp = "Hound's Tooth";
+                            
+                            else
+                            {
+                                try
+                                {
+                                    temp = l.Split('\"')[1];
+                                }
+                                catch
+                                {
+                                    temp = l.Split('\'')[1];
+                                }
+                            }
+                            pos = data.UpgradeNames.IndexOf(temp);
                         }
                     }
                 }

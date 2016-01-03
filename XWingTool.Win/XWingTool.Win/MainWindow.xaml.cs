@@ -141,7 +141,10 @@ namespace XWingTool.Win
                         break;
                     }
                 }
-                pilots[f, s, index[f, s, 0]] = pilot.Name;
+                if(pilot.Unique)
+                    pilots[f, s, index[f, s, 0]] = "*" + pilot.Name + " (" + pilot.Points + ")";
+                else
+                    pilots[f, s, index[f, s, 0]] = pilot.Name + " (" + pilot.Points + ")";
                 index[f, s, 0]++;
             }
 
@@ -168,7 +171,7 @@ namespace XWingTool.Win
                         break;
                     ships.Add(pilots[i, j, 0]);
                 }
-                ships.Sort();
+                //ships.Sort();
                 foreach (var s in ships)
                 {
                     int z = 0;
@@ -189,7 +192,7 @@ namespace XWingTool.Win
                             break;
                         p.Add(pilots[i, z, k]);
                     }
-                    p.Sort(); ;
+                    //p.Sort();
                     foreach (var p2 in p)
                     {
                         TreeViewItem tvi3 = new TreeViewItem();
@@ -206,7 +209,7 @@ namespace XWingTool.Win
         private void BuildTreeViewUpgrades()
         {
             TreeViewUpgrades.Items.Clear();
-            string[,] upgrades = new string[cc.data.UpgradeSlots.Count, cc.data.IUpgrades.Count / (cc.data.UpgradeSlots.Count / 3)];
+            string[,] upgrades = new string[cc.data.UpgradeSlots.Count, cc.data.IUpgrades.Count / (cc.data.UpgradeSlots.Count / 4)];
             cc.data.UpgradeSlots.Sort();
             for (int i = 0; i < cc.data.UpgradeSlots.Count; i++)
             {
@@ -229,9 +232,12 @@ namespace XWingTool.Win
                         break;
                     }
                 }
-                if (f != -1 && upgr.Name != "")
+                if (f != -1 && upgr.Name != "" && !upgr.Name.Contains("Zero"))
                 {
-                    upgrades[f, index[f, 0]] = upgr.Name + " (" + upgr.Points + ")";
+                    if(upgr.Unique)
+                        upgrades[f, index[f, 0]] = "*" + upgr.Name + " (" + upgr.Points + ")";
+                    else
+                        upgrades[f, index[f, 0]] = upgr.Name + " (" + upgr.Points + ")";
                     index[f, 0]++;
                 }
             }
@@ -270,14 +276,20 @@ namespace XWingTool.Win
         //Update Data MenuItem
         private void MenuItem_Click_1(object sender, RoutedEventArgs e)
         {
+            WaitDialog wd = new WaitDialog();
+            wd.Show();
+            cc.ReLoad();
             LoadActions();
+            wd.Close();
         }
 
         //after load
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            WaitDialog wd = new WaitDialog();
+            wd.Show();
             LoadActions();
-
+            wd.Close();
         }
 
         private void LoadActions()
@@ -294,10 +306,16 @@ namespace XWingTool.Win
 
         private void TreeViewPilots_SelectedItemChanged(object sender, RoutedEventArgs e)
         {
+            if (TreeViewPilots.SelectedItem == null)
+                return;
             string v = (string)((TreeViewItem)TreeViewPilots.SelectedItem).Header;
             if (v == "Rebel Alliance / Resistance" || v == "Galactic Empire / First Order" || v == "Scum and Villainy")
                 return;
 
+            if (v.StartsWith("*"))
+                v = v.Substring(1);
+            if (v.Contains("("))
+                v = v.Remove(v.IndexOf("(") - 1);
             int pos = cc.data.PilotNames.IndexOf(v);
             if (pos > -1)
             {
@@ -419,24 +437,74 @@ namespace XWingTool.Win
             }
         }
 
+        private void DisplayUpgrade(IUpgrade u)
+        {
+            if (u == null)
+                return;
+            List<string> text = u.GetText();
+            if (text != null)
+            {
+                TextBlockUpgrades.Inlines.Clear();
+                int last = text.Count - 1;
+                for (int i = 0; i < last; i++)
+                {
+                    if (i % 2 == 0)
+                        TextBlockUpgrades.Inlines.Add(new Run(text[i]) { FontWeight = FontWeights.Bold });
+                    else
+                        TextBlockUpgrades.Inlines.Add(text[i]);
+                }
+                TextBlockUpgrades.Inlines.Add(text[last]);
+            }
+        }
+
         private void TextBoxUpgradeSearch_KeyUp(object sender, KeyEventArgs e)
         {
-
+            if (e.Key == Key.Enter || e.Key == Key.Return)
+                UpgradeSearch();
         }
 
         private void ButtonUpgradeSearch_Click(object sender, RoutedEventArgs e)
         {
-
+            UpgradeSearch();
         }
 
         private void TreeViewUpgrades_SelectedItemChanged(object sender, RoutedEventArgs e)
         {
-
+            if (TreeViewUpgrades.SelectedItem == null)
+                return;
+            string v = (string)((TreeViewItem)TreeViewUpgrades.SelectedItem).Header;
+            foreach(var slot in cc.data.UpgradeSlots)
+            {
+                if (v == slot)
+                    return;
+            }
+            if (v.StartsWith("*"))
+                v = v.Substring(1);
+            if (v.Contains("("))
+                v = v.Remove(v.IndexOf("(") - 1);
+            int pos = cc.data.UpgradeNames.IndexOf(v);
+            if (pos > -1)
+            {
+                DisplayUpgrade(cc.data.IUpgrades[pos]);
+            }
         }
 
         private void DataGridUpgradeSearchResult_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            DisplayUpgrade((IUpgrade)DataGridUpgradeSearchResult.SelectedItem);
+        }
 
+        private void UpgradeSearch()
+        {
+            List<IUpgrade> ul = cc.SearchUpgrades(this.TextBoxUpgradeSearch.Text);
+            DataGridUpgradeSearchResult.ItemsSource = null;
+            DataGridUpgradeSearchResult.ItemsSource = ul;
+            dataView = CollectionViewSource.GetDefaultView(DataGridUpgradeSearchResult.ItemsSource);
+            dataView.SortDescriptions.Clear();
+
+            dataView.SortDescriptions.Add(new SortDescription("Points", ListSortDirection.Descending));
+            dataView.SortDescriptions.Add(new SortDescription("Name", ListSortDirection.Ascending));
+            dataView.Refresh();
         }
     }
 

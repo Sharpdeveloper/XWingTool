@@ -16,6 +16,8 @@ namespace XWingTool.Core
         List<string> Sources { get; set; }
         int Points { get; set; }
         bool Unique { get;  set; }
+        string Text { get; set; }
+        string Restriction { get; set; }
         List<string> GetText();
     }
 }

@@ -28,15 +28,15 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="200"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="2*"/>
                         <ColumnDefinition Width="50px"/>
                     </Grid.ColumnDefinitions>
                     <TextBox x:Name="TextBoxPilotSearch" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="0" KeyUp="TextBoxPilotSearch_KeyUp"/>
                     <Button x:Name="ButtonPilotSearch" Grid.Column="2" Grid.Row="0" Content="Search" Click="ButtonPilotSearch_Click"/>
                     <TreeView x:Name="TreeViewPilots" Grid.Column="0" Grid.ColumnSpan="1" Grid.Row="1" Grid.RowSpan="2" SelectedItemChanged="TreeViewPilots_SelectedItemChanged" />
                     <DataGrid x:Name="DataGridPilotSearchResult" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="2" AutoGenerateColumns="False" SelectionChanged="DataGridPilotSearchResult_SelectionChanged" ScrollViewer.CanContentScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
-                    <ScrollViewer Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="1">
+                    <ScrollViewer Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="1" Margin="5,0,0,0">
                         <TextBlock x:Name="TextBlockPilots" TextWrapping="Wrap" ScrollViewer.CanContentScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
                     </ScrollViewer>
                 </Grid>
@@ -49,15 +49,15 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="200"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="2*"/>
                         <ColumnDefinition Width="50px"/>
                     </Grid.ColumnDefinitions>
                     <TextBox x:Name="TextBoxUpgradeSearch" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="0" KeyUp="TextBoxUpgradeSearch_KeyUp"/>
                     <Button x:Name="ButtonUpgradeSearch" Grid.Column="2" Grid.Row="0" Content="Search" Click="ButtonUpgradeSearch_Click"/>
                     <TreeView x:Name="TreeViewUpgrades" Grid.Column="0" Grid.ColumnSpan="1" Grid.Row="1" Grid.RowSpan="2" SelectedItemChanged="TreeViewUpgrades_SelectedItemChanged" />
                     <DataGrid x:Name="DataGridUpgradeSearchResult" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="2" AutoGenerateColumns="False" SelectionChanged="DataGridUpgradeSearchResult_SelectionChanged" ScrollViewer.CanContentScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
-                    <ScrollViewer Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="1">
+                    <ScrollViewer Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="1" Margin="5,0,0,0">
                         <TextBlock x:Name="TextBlockUpgrades" TextWrapping="Wrap" ScrollViewer.CanContentScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
                     </ScrollViewer>
                 </Grid>

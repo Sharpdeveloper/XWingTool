@@ -16,10 +16,9 @@ namespace XWingTool.Core
         public List<IUpgrade> IUpgrades { get; set; }
         public List<Ship> IShips { get; set; }
         public List<Pilot> IPilots { get; set; }
-        public List<string> PilotNames { get; set; }
-        public List<string> PilotGerNames { get; set; }
         public List<string> ShipNames { get; set; }
-        public List<string> ShipGerNames { get; set; }
+        public List<string> PilotNames { get; set; }
+        public List<string> UpgradeNames { get; set; }
         public List<string> UpgradeSlots { get; set;}
 
         public Data()
@@ -32,10 +31,9 @@ namespace XWingTool.Core
             IUpgrades = new List<IUpgrade>();
             IShips = new List<Ship>();
             IPilots = new List<Pilot>();
-            PilotNames = new List<string>();
             ShipNames = new List<string>();
-            PilotGerNames = new List<string>();
-            ShipGerNames = new List<string>();
+            PilotNames = new List<string>();
+            UpgradeNames = new List<string>();
             UpgradeSlots = new List<string>();
         }
 
@@ -43,39 +41,47 @@ namespace XWingTool.Core
         {
             Ships.Add(ship);
             ShipNames.Add(ship.Name);
-            ShipGerNames.Add(ship.Name);
         }
 
         internal void AddPilot(Pilot pilot)
         {
             Pilots.Add(pilot);
             PilotNames.Add(pilot.Name);
-            PilotGerNames.Add(pilot.Name);
         }
 
-        internal void AddUpgrade(Upgrade upgrade)
-        {
-            AddIUpgrade(upgrade);
-            Upgrades.Add(upgrade);
-        }
-
-        internal void AddModification(Modification modification)
-        {
-            AddIUpgrade(modification);
-            Modifications.Add(modification);
-        }
-
-        internal void AddTitle(Title title)
-        {
-            AddIUpgrade(title);
-            Titles.Add(title);
-        }
-
-        private void AddIUpgrade(IUpgrade upgr)
+        internal void AddIUpgrade(IUpgrade upgr)
         {
             IUpgrades.Add(upgr);
             if (!UpgradeSlots.Contains(upgr.UpgradeSlot) && upgr.UpgradeSlot != "")
                 UpgradeSlots.Add(upgr.UpgradeSlot);
+            UpgradeNames.Add(upgr.Name);
+            if (upgr is Modification)
+                Modifications.Add((Modification)upgr);
+            else if (upgr is Title)
+                Titles.Add((Title)upgr);
+            else
+                Upgrades.Add((Upgrade)upgr);
+        }
+
+        internal void ClearShips()
+        {
+            Ships = new List<Ship>();
+            ShipNames = new List<string>();
+        }
+
+        internal void ClearPilots()
+        {
+            Pilots = new List<Pilot>();
+            PilotNames = new List<string>();
+        }
+
+        internal void ClearUpgrades()
+        {
+            IUpgrades = new List<IUpgrade>();
+            Upgrades = new List<Upgrade>();
+            Titles = new List<Title>();
+            Modifications = new List<Modification>();
+            UpgradeNames = new List<string>();
         }
     }
 }
