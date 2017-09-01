@@ -16,6 +16,7 @@ using System.IO;
 
 using XWingTool.Core;
 using System.ComponentModel;
+using Microsoft.Win32;
 
 namespace XWingTool.Win
 {
@@ -26,6 +27,11 @@ namespace XWingTool.Win
     {
         private CardController cc;
         private ICollectionView dataView;
+        private Statistic stats;
+        private ICollectionView dataViewPilots;
+        private ICollectionView dataViewShips;
+        private ICollectionView dataViewUpgrades;
+        private bool english = true;
 
         public MainWindow()
         {
@@ -79,6 +85,51 @@ namespace XWingTool.Win
             dgc.Binding = new Binding("UpgradeSlot");
             dgc.IsReadOnly = true;
             DataGridUpgradeSearchResult.Columns.Add(dgc);
+
+            dgc = new DataGridTextColumn();
+            dgc.Header = "Name";
+            dgc.Binding = new Binding("Name");
+            dgc.IsReadOnly = true;
+            DataGridPilots.Columns.Add(dgc);
+            dgc = new DataGridTextColumn();
+            dgc.Header = "Count";
+            dgc.Binding = new Binding("Count");
+            dgc.IsReadOnly = true;
+            DataGridPilots.Columns.Add(dgc);
+            dgc = new DataGridTextColumn();
+            dgc.Header = "Wave";
+            dgc.Binding = new Binding("Wave");
+            dgc.IsReadOnly = true;
+            DataGridPilots.Columns.Add(dgc);
+
+            dataViewPilots = CollectionViewSource.GetDefaultView(DataGridPilots.ItemsSource);
+
+            dgc = new DataGridTextColumn();
+            dgc.Header = "Name";
+            dgc.Binding = new Binding("Name");
+            dgc.IsReadOnly = true;
+            DataGridShips.Columns.Add(dgc);
+            dgc = new DataGridTextColumn();
+            dgc.Header = "Count";
+            dgc.Binding = new Binding("Count");
+            dgc.IsReadOnly = true;
+            DataGridShips.Columns.Add(dgc);
+
+            dataViewShips = CollectionViewSource.GetDefaultView(DataGridShips.ItemsSource);
+            
+            dgc = new DataGridTextColumn();
+            dgc.Header = "Name";
+            dgc.Binding = new Binding("Name");
+            dgc.IsReadOnly = true;
+            DataGridUpgrades.Columns.Add(dgc);
+            dgc = new DataGridTextColumn();
+            dgc.Header = "Count";
+            dgc.Binding = new Binding("Count");
+            dgc.IsReadOnly = true;
+            DataGridUpgrades.Columns.Add(dgc);
+
+            dataViewUpgrades = CollectionViewSource.GetDefaultView(DataGridUpgrades.ItemsSource);
+       
         }
 
         private void BuildTreeViewPilots()
@@ -133,7 +184,7 @@ namespace XWingTool.Win
                         break;
                 }
                 int s = 0;
-                for (int i = 0; i < cc.data.Ships.Count; i++)
+                for (int i = 0; i < cc.data.Ships.Count / 2; i++)
                 {
                     if (pilots[f, i, 0] == pilot.ShipName)
                     {
@@ -505,6 +556,112 @@ namespace XWingTool.Win
             dataView.SortDescriptions.Add(new SortDescription("Points", ListSortDirection.Descending));
             dataView.SortDescriptions.Add(new SortDescription("Name", ListSortDirection.Ascending));
             dataView.Refresh();
+        }
+
+        private void ButtonPlus_Click(object sender, RoutedEventArgs e)
+        {
+            if (cc.stats == null)
+                return;
+            if (TextBoxURL.Text.Contains(@"geordanr.github.io/xwing"))
+            {
+                cc.stats.Parse(TextBoxURL.Text);
+                Refresh();
+                TextBoxURL.Text = "";
+            }
+            else
+            {
+                MessageBox.Show("Only YASB links allowed.");
+            }
+        }
+
+        private void Refresh()
+        {
+            DataGridPilots.ItemsSource = null;
+            DataGridPilots.ItemsSource = cc.stats.IPilots;
+            dataViewPilots = CollectionViewSource.GetDefaultView(DataGridPilots.ItemsSource);
+            dataViewPilots.SortDescriptions.Clear();
+            dataViewPilots.SortDescriptions.Add(new System.ComponentModel.SortDescription("Count", System.ComponentModel.ListSortDirection.Descending));
+            dataViewPilots.SortDescriptions.Add(new System.ComponentModel.SortDescription("Name", System.ComponentModel.ListSortDirection.Ascending));
+            
+
+            DataGridShips.ItemsSource = null;
+            DataGridShips.ItemsSource = cc.stats.IShips;
+            dataViewShips = CollectionViewSource.GetDefaultView(DataGridShips.ItemsSource);
+            dataViewShips.SortDescriptions.Clear();
+            dataViewShips.SortDescriptions.Add(new System.ComponentModel.SortDescription("Count", System.ComponentModel.ListSortDirection.Descending));
+            dataViewShips.SortDescriptions.Add(new System.ComponentModel.SortDescription("Name", System.ComponentModel.ListSortDirection.Ascending));
+
+            DataGridUpgrades.ItemsSource = null;
+            DataGridUpgrades.ItemsSource = cc.stats.IUpgrades;
+            dataViewUpgrades = CollectionViewSource.GetDefaultView(DataGridUpgrades.ItemsSource);
+            dataViewUpgrades.SortDescriptions.Clear();
+            dataViewUpgrades.SortDescriptions.Add(new System.ComponentModel.SortDescription("Count", System.ComponentModel.ListSortDirection.Descending));
+            dataViewUpgrades.SortDescriptions.Add(new System.ComponentModel.SortDescription("Name", System.ComponentModel.ListSortDirection.Ascending));
+        }
+
+        private void ButtonMinus_Click(object sender, RoutedEventArgs e)
+        {
+            if (cc.stats == null)
+                return;
+            if (TextBoxURL.Text.Contains(@"geordanr.github.io/xwing"))
+            {
+                if (cc.stats.IPilots.Count == 0)
+                {
+                    MessageBox.Show("There is no data.Nothing can be removed.");
+                }
+                try
+                {
+                    cc.stats.Parse(TextBoxURL.Text, false);
+                }
+                catch (ArgumentException aex)
+                {
+                    MessageBox.Show("This squad wasn't added, so it can't be removed.");
+                }
+                Refresh();
+                TextBoxURL.Text = "";
+            }
+            else
+            {
+                MessageBox.Show("Only YASB links allowed.");
+            }
+        }
+
+        private void SaveStats_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog dlg = new SaveFileDialog();
+            dlg.Filter = "Stats-Files | *.xwstats";
+            Nullable<bool> result = dlg.ShowDialog();
+            if (result == true)
+                cc.SaveStats(dlg.FileName);
+        }
+
+        private void LoadStats_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog dlg = new OpenFileDialog();
+            dlg.Filter = "Stats-Files | *.xwstats";
+            Nullable<bool> result = dlg.ShowDialog();
+            if (result == true)
+                cc.LoadStats(dlg.FileName);
+            Refresh();
+        }
+
+        private void ImportLists_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog dlg = new OpenFileDialog();
+            dlg.Filter = "Text-Files | *.txt";
+            Nullable<bool> result = dlg.ShowDialog();
+            if (result == true)
+                cc.ImportLists(dlg.FileName);
+            Refresh();
+        }
+
+        private void ExportStats_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog dlg = new SaveFileDialog();
+            dlg.Filter = "Excel-Files | *.csv";
+            Nullable<bool> result = dlg.ShowDialog();
+            if (result == true)
+                cc.ExportStats(dlg.FileName);
         }
     }
 

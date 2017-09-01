@@ -16,6 +16,7 @@ namespace XWingTool.Core
     {
         public string workPath, cards, translations, dataPath, maneuverPath, maneuver;
         public Data data;
+        public Statistic stats;
         private const string squadfilecards = "https://raw.githubusercontent.com/geordanr/xwing/master/coffeescripts/cards-common.coffee";
         private const string squadfiletranslation = "https://raw.githubusercontent.com/geordanr/xwing/master/coffeescripts/cards-en.coffee";
         private const string maneuverFiles = "http://downloads.piratesoftatooine.de/Manoever.zip";
@@ -39,6 +40,7 @@ namespace XWingTool.Core
                 if (File.Exists(dataPath))
                 {
                     data = Load();
+                    createStats();
                 }
                 else
                     ReLoad();
@@ -52,6 +54,17 @@ namespace XWingTool.Core
             data = LoadContents();
             Translate();
             Save();
+            createStats();
+        }
+
+        private void createStats()
+        {
+            stats = new Statistic();
+            stats.Ships = data.Ships;
+            stats.Pilots = data.Pilots;
+            stats.Modifications = data.Modifications;
+            stats.Upgrades = data.Upgrades;
+            stats.Titles = data.Titles;
         }
 
         private Data Load()
@@ -74,6 +87,23 @@ namespace XWingTool.Core
             return data;
         }
 
+        public void LoadStats(string path)
+        {
+            stats = null;
+            IFormatter formatter = new BinaryFormatter();
+            try
+            {
+                using (Stream stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    stats = (Statistic)formatter.Deserialize(stream);
+                }
+            }
+            catch
+            {
+               
+            }
+        }
+
         private void Save()
         {
             IFormatter formatter = new BinaryFormatter();
@@ -82,6 +112,96 @@ namespace XWingTool.Core
                 formatter.Serialize(stream, data);
             }
         }
+
+        public void SaveStats(string path)
+        {
+            IFormatter formatter = new BinaryFormatter();
+            using (Stream stream = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
+            {
+                formatter.Serialize(stream, stats);
+            }
+        }
+
+        public void ImportLists(string path)
+        {
+            createStats();
+            using(StreamReader sr = new StreamReader(path)){
+                string list;
+                while ((list = sr.ReadLine()) != null)
+                {
+                    stats.Parse(list);
+                }
+            }
+        }
+
+        public void ExportStats(string path) { 
+            List<string> lines = new List<string>();
+            stats.Sort();
+            int length = stats.IPilots.Count > stats.IShips.Count ? stats.IPilots.Count : stats.IShips.Count;
+            length = length > stats.IUpgrades.Count ? length : stats.IUpgrades.Count;
+                    string line = "=SUMME(A2:A" + length + ");Schiffe;MERCode;;=SUMME(E2:E" + length + ");Piloten;Welle;;=SUMME(I2:I" + length + ");Aufwertungskarten;;=SUMME(L2:L" + length + ");Punktzahlen;;;=SUMME(P2:P" + length + ");Fraktionen;Prozent;Schiffe pro Fraktion;Schiffepro Liste;;Schiffe pro Squad;=E1/P1;;";
+                    lines.Add(line);
+                    List<string> PointFormulas = new List<string>(); ;
+                    List<string> FactionFormulas = new List<string>();
+                    List<string> ShipsPerFactionFormulas = new List<string>();
+                    List<string> WaveFormulas = new List<string>();
+                    for (int i = 0; i <= stats.Points.Count; i++)
+                    {
+                        line = "=L" + (i + 2) + "/L1";
+                        PointFormulas.Add(line);
+                    }
+                    for (int i = 0; i <= stats.FPoints.Count; i++)
+                    {
+                        line = "=P" + (i + 2) + "/P1";
+                        FactionFormulas.Add(line);
+                    }
+                    for (int i = 0; i <= stats.FPoints.Count; i++)
+                    {
+                        line = "=S" + (i + 2) + "/P" + (i + 2);
+                        ShipsPerFactionFormulas.Add(line);
+                    }
+                    for (int i = 0; i <= stats.Waves.Count; i++)
+                    {
+                        line = "=W" + (i + 2) + "/E1";
+                        WaveFormulas.Add(line);
+                    }
+                    for (int i = 0; i < length; i++)
+                    {
+                        line = "";
+                        if (i < stats.IShips.Count)
+                            line += stats.IShips[i].Count + ";" + stats.IShips[i].Gername + ";" + stats.IShips[i].MERCode + ";;";
+                        else
+                            line += ";;;;";
+                        if (i < stats.IPilots.Count)
+                            line += stats.IPilots[i].Count + ";" + stats.IPilots[i].Gername + ";" + stats.IPilots[i].Wave + ";;";
+                        else
+                            line += ";;;;";
+                        if (i < stats.IUpgrades.Count)
+                            line += stats.IUpgrades[i].Count + ";" + stats.IUpgrades[i].Gername + ";;";
+                        else
+                            line += ";;;";
+                        if (i < stats.Points.Count)
+                            line += stats.Points[i][1] + ";" + stats.Points[i][0] + ";" + PointFormulas[i] + ";;";
+                        else
+                            line += ";;;;";
+                        if (i < stats.FPoints.Count)
+                            line += stats.FPoints[i].Count + ";" + stats.FPoints[i].PointsFaction + ";" + FactionFormulas[i] + ";" + stats.ShipsPerFaction[i] + ";" + ShipsPerFactionFormulas[i] + ";;";
+                        else
+                            line += ";;;;;;";
+                        if (i < stats.Waves.Count)
+                            line += "Welle " + stats.Waves[i].Name + ";" + stats.Waves[i].Count + ";" + WaveFormulas[i] + ";;";
+                        else
+                            line += ";;;;";
+                        lines.Add(line);
+                    }
+
+                    using (StreamWriter f = new StreamWriter(path))
+                    {
+                        foreach (string s in lines)
+                            f.WriteLine(s);
+                    }
+                }
+ 
 
         private void LoadFiles()
         {
@@ -161,8 +281,17 @@ namespace XWingTool.Core
             string f;
             do
             {
+                if(start != 0)
+                { 
                 end = data.IndexOf("\"", start);
-                f = data.Substring(start, end - start);
+                    f = data.Substring(start, end - start);
+                }
+                else
+                {
+                    start = data.IndexOf("\'", 0) + 1;
+                    end = data.IndexOf("\'", start);
+                    f = data.Substring(start, end - start);
+                }
                 factions.Add(f);
                 //if (f == "Rebel Alliance")
                 //    factions.Add("Rebellen Allianz");
@@ -599,7 +728,13 @@ namespace XWingTool.Core
                     }
                     catch
                     {
-                        range = l.Split('\"')[1];
+                        try {
+                            range = l.Split('\"')[1];
+                        }
+                        catch
+                        {
+                            range = l.Substring(l.IndexOf(':') + 1, 2);
+                        }
                     }
                 }
                 else if (l.Contains("points:"))
@@ -790,7 +925,13 @@ namespace XWingTool.Core
                     points = Int32.Parse(l.Remove(0, l.IndexOf(':') + 1));
                 else if (l.Contains("ship:"))
                 {
-                    ship = GetShip(l.Split('"')[1]);
+                    try {
+                        ship = GetShip(l.Split('"')[1]);
+                    }
+                    catch(Exception e)
+                    {
+                        ship = GetShip(l.Split('\'')[1]);
+                    }
                 }
                 else if (l.Contains("unique:"))
                     unique = true;
@@ -901,7 +1042,15 @@ namespace XWingTool.Core
                 l = temp[i];
 
                 if (l.Contains("name:") && !l.Contains("canonical_name"))
-                    name = l.Split('\"')[1];
+                {
+                    try {
+                        name = l.Split('\"')[1];
+                    }
+                    catch(Exception e)
+                    {
+                        name = l.Split('\'')[1];
+                    }
+                }
                 else if (l.Contains("attack:"))
                     attack = Int32.Parse(l.Remove(0, l.IndexOf(':') + 1));
                 else if (l.Contains("agility:"))
@@ -964,7 +1113,7 @@ namespace XWingTool.Core
         }
 
         private void Translate()
-        {
+        {/*
             string text, temp = "";
             string[] lines;
             bool ships = false, pilots = false, upgrades = false, modifications = false, title = false;
@@ -1250,7 +1399,7 @@ namespace XWingTool.Core
                         }
                     }
                 }
-            }
+            }*/
         }
 
     }

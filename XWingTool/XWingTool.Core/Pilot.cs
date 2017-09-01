@@ -71,6 +71,22 @@ namespace XWingTool.Core
                 Wave = "6";
             else if (id <= 130)
                 Wave = "Epic 3";
+            else if (id <= 146)
+                Wave = "7";
+            else if (id <= 149)
+                Wave = "Epic 3";
+            else if (id <= 154)
+                Wave = "Epic 4";
+            else if (id <= 189)
+                Wave = "8";
+            else if (id <= 195)
+                Wave = "8.5";
+            else if (id <= 203)
+                Wave = "9.5";
+            else if (id <= 221)
+                Wave = "9";
+            else if (id <= 243)
+                Wave = "10";
             else
                 Wave = "Unbekannt";
         }
